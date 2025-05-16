@@ -1,54 +1,63 @@
 <?php
 
-Class Statistics {
-    private $round=2;
-    public $scores, $frequency, $pn, $sn, $fx, $XminA, $XminAsqr, $rf, $rfp, $cf;
-    public $mean, $median, $mode;
-    public $range, $iqr, $pv, $sv, $psd, $ssd, $q, $max, $min;
+declare(strict_types=1);
 
-    function __Construct($scores=array(1),$round=2) {
-        if(is_array($scores) && is_int($round)) {
-            $this->round = $round;
-            $this->scores = self::cleanArray($scores);
-            $this->frequency = self::Calculate_F();
-            $this->pn = count($this->scores);
-            $this->sn = count($this->scores) - 1;
-        } else {
-            trigger_error('No valid array supplied.', E_USER_ERROR);
-        }
+class Statistics {
+    private int $round = 2;
+    public array $scores;
+    public array $frequency;
+    public int $pn;
+    public int $sn;
+    public ?array $fx = null;
+    public ?array $XminA = null;
+    public ?array $XminAsqr = null;
+    public ?array $rf = null;
+    public ?array $rfp = null;
+    public ?array $cf = null;
+    public ?float $mean = null;
+    public ?float $median = null;
+    public ?float $mode = null;
+    public ?float $range = null;
+    public ?float $iqr = null;
+    public ?float $pv = null;
+    public ?float $sv = null;
+    public ?float $psd = null;
+    public ?float $ssd = null;
+    public ?array $q = null;
+    public ?float $max = null;
+    public ?float $min = null;
+
+    public function __construct(array $scores = [1], int $round = 2) {
+        $this->round = $round;
+        $this->scores = $this->cleanArray($scores);
+        $this->frequency = $this->calculateFrequency();
+        $this->pn = count($this->scores);
+        $this->sn = count($this->scores) - 1;
     }
 
-    /*
+    /**
      * Clean an array of non-numeric values
      *
      * @param array $x Set of numbers
-     * @access private
-     * @return array Scores
+     * @return array Cleaned scores
      */
-    private function cleanArray($x) {
-        if(is_array($x)) {
-            $cleanScores = array();
-            foreach($x as $dirty => $val){
-                if($val == 0) {
-                    unset($cleanScores[$dirty]);
-                }
-                else {
-                    $cleanScores[] = (string)$val;
-                }
+    private function cleanArray(array $x): array {
+        $cleanScores = [];
+        foreach ($x as $val) {
+            if ($val != 0) {
+                $cleanScores[] = (string)$val;
             }
-            sort($cleanScores);
-        } else {
-            trigger_error('This is not a valid array.', E_USER_ERROR);
         }
+        sort($cleanScores);
         return $cleanScores;
     }
 
-    /*
+    /**
      * Return Scores
      *
      * @return array Scores
      */
-    public function Get_Scores() {
+    public function getScores(): array {
         return $this->scores;
     }
 
@@ -57,7 +66,7 @@ Class Statistics {
      *
      * @return array Frequency
      */
-    public function Calculate_F() {
+    public function calculateFrequency(): array {
         return array_count_values($this->scores);
     }
 
@@ -66,437 +75,480 @@ Class Statistics {
      *
      * @return array Frequency
      */
-    public function Get_Frequency() {
+    public function getFrequency(): array {
         return $this->frequency;
     }
 
     /**
      * Return Population Size
      *
-     * @return int Pn
+     * @return int Population size
      */
-    public function Get_PN() {
+    public function getPN(): int {
         return $this->pn;
     }
 
     /**
      * Return Sample Size
      *
-     * @return int Sn
+     * @return int Sample size
      */
-    public function Get_SN() {
+    public function getSN(): int {
         return $this->sn;
     }
 
     /**
      * Return Quartiles 1, 2 and 3
      *
-     * @return array Q
+     * @return array Quartiles
      */
-    public function Get_Q() {
+    public function getQ(): ?array {
         return $this->q;
     }
 
-    /*
+    /**
      * Calculate Quartiles 1, 2 and 3
      *
-     * @return array Q
+     * @return array Quartiles
      */
-    public function Find_Q() {
-        $this->q = array();
-        $this->q[1] = self::Percentile($this->scores, 25);
-        $this->q[2] = self::Percentile($this->scores, 50);
-        $this->q[3] = self::Percentile($this->scores, 75);
+    public function findQ(): array {
+        $this->q = [];
+        $this->q[1] = $this->percentile($this->scores, 25);
+        $this->q[2] = $this->percentile($this->scores, 50);
+        $this->q[3] = $this->percentile($this->scores, 75);
         return $this->q;
     }
 
-    /*
+    /**
      * Calculate FX (F * X) (Frequency * Scores)
      *
-     * @return array Fx
+     * @return array FX values
      */
-    public function Calculate_FX() {
+    public function calculateFX(): array {
         $frequency = $this->frequency;
+        $fx = [];
 
-        foreach($this->scores as $key=>$value){
+        foreach ($this->scores as $key => $value) {
             $newValue = $value * $frequency[$value];
-            $this->fx[$key] = round($newValue,$this->round);
+            $fx[$key] = round((float)$newValue, $this->round);
         }
+        
+        $this->fx = $fx;
         return $this->fx;
     }
 
-    /*
+    /**
      * Return FX
      *
-     * @return array Fx
+     * @return array FX values
      */
-    public function Get_FX() {
+    public function getFX(): ?array {
         return $this->fx;
     }
 
-    /*
+    /**
      * Calculate the Mean
      *
-     * @return mixed Mean
+     * @return float Mean
      */
-    public function Find_Mean() {
+    public function findMean(): float {
         $total = 0;
-        foreach($this->scores as $score) {
-            $total += $score;
+        foreach ($this->scores as $score) {
+            $total += (float)$score;
         }
-        return $this->mean = round(($total / $this->pn),$this->round);
-    }
-
-    /*
-     * Return the Mean
-     *
-     * @return mixed Mean
-     */
-    public function Get_Mean() {
+        $this->mean = round(($total / $this->pn), $this->round);
         return $this->mean;
     }
 
-    /*
-     * Calculate the Median
+    /**
+     * Return the Mean
      *
-     * @return mixed Median
+     * @return float Mean
      */
-    public function Find_Median() {
-        if(!isset($this->q)) {
-            $this->q = self::Find_Q();
-        }
-        return $this->median = $this->q[2];
+    public function getMean(): ?float {
+        return $this->mean;
     }
 
-    /*
-     * Return the Median
+    /**
+     * Calculate the Median
      *
-     * @return mixed Median
+     * @return float Median
      */
-    public function Get_Median() {
+    public function findMedian(): float {
+        if ($this->q === null) {
+            $this->q = $this->findQ();
+        }
+        $this->median = $this->q[2];
         return $this->median;
     }
 
-    /*
-     * Calculate the Mode
+    /**
+     * Return the Median
      *
-     * @return mixed Mode
+     * @return float Median
      */
-    public function Find_Mode() {
-        $counted = array_count_values($this->scores);
-        arsort($counted);
-        return $this->mode = key($counted);
+    public function getMedian(): ?float {
+        return $this->median;
     }
 
-    /*
-     * Return the Mode
+    /**
+     * Calculate the Mode
      *
-     * @return mixed Mode
+     * @return float Mode
      */
-    public function Get_Mode() {
+    public function findMode(): float {
+        $counted = array_count_values($this->scores);
+        arsort($counted);
+        $this->mode = (float)key($counted);
         return $this->mode;
     }
 
-    /*
-     * Calculate the Range
+    /**
+     * Return the Mode
      *
-     * @return mixed Range
+     * @return float Mode
      */
-    public function Find_Range() {
-        if(!isset($this->max)) {
-            $this->max = self::Find_Max();
-        }
-        if(!isset($this->min)) {
-            $this->min = self::Find_Min();
-        }
-        return $this->range = $this->max - $this->min;
+    public function getMode(): ?float {
+        return $this->mode;
     }
 
-    /*
-     * Return the Range
+    /**
+     * Calculate the Range
      *
-     * @return mixed Range
+     * @return float Range
      */
-    public function Get_Range() {
+    public function findRange(): float {
+        if ($this->max === null) {
+            $this->max = $this->findMax();
+        }
+        if ($this->min === null) {
+            $this->min = $this->findMin();
+        }
+        $this->range = $this->max - $this->min;
         return $this->range;
     }
 
-    /*
+    /**
+     * Return the Range
+     *
+     * @return float Range
+     */
+    public function getRange(): ?float {
+        return $this->range;
+    }
+
+    /**
      * Calculate the Highest Value
      *
-     * @return mixed Max
+     * @return float Maximum value
      */
-    public function Find_Max() {
-        return $this->max = max($this->scores);
-    }
-
-    /*
-     * Calculate the Lowest Value
-     *
-     * @return mixed Min
-     */
-    public function Find_Min() {
-        return $this->min = min($this->scores);
-    }
-
-    /*
-     * Return the Highest Value
-     *
-     * @return mixed Max
-     */
-    public function Get_Max() {
+    public function findMax(): float {
+        $this->max = (float)max($this->scores);
         return $this->max;
     }
 
-    /*
-     * Return the Lowest Value
+    /**
+     * Calculate the Lowest Value
      *
-     * @return mixed Min
+     * @return float Minimum value
      */
-    public function Get_Min() {
+    public function findMin(): float {
+        $this->min = (float)min($this->scores);
         return $this->min;
     }
 
-    /*
+    /**
+     * Return the Highest Value
+     *
+     * @return float Maximum value
+     */
+    public function getMax(): ?float {
+        return $this->max;
+    }
+
+    /**
+     * Return the Lowest Value
+     *
+     * @return float Minimum value
+     */
+    public function getMin(): ?float {
+        return $this->min;
+    }
+
+    /**
      * Calculate (X - Mean) OR (X - Mean) squared
      *
-     * @param bool $sqr
-     * @return array
+     * @param bool $sqr Calculate squared values
+     * @return array Results
      */
-    public function Calculate_XminAvg($sqr=false) {
-        if(!isset($this->mean)) {
-            $this->mean = self::Find_Mean();
+    public function calculateXminAvg(bool $sqr = false): array {
+        if ($this->mean === null) {
+            $this->mean = $this->findMean();
         }
+        
         $mean = $this->mean;
-        $XminA = array();
-        foreach($this->scores as $key => $val) {
-            ($sqr == true) ? $XminA[$key] = round(pow(($val - $mean),2),$this->round) : $XminA[$key] = round(($val - $mean),$this->round);
+        $XminA = [];
+        
+        foreach ($this->scores as $key => $val) {
+            $value = ($sqr) 
+                ? round(pow(((float)$val - $mean), 2), $this->round) 
+                : round(((float)$val - $mean), $this->round);
+            
+            $XminA[$key] = $value;
         }
-        if($sqr == true) {
-            return $this->XminAsqr = $XminA;
-        }
-        else {
-            return $this->XminA = $XminA;
+        
+        if ($sqr) {
+            $this->XminAsqr = $XminA;
+            return $this->XminAsqr;
+        } else {
+            $this->XminA = $XminA;
+            return $this->XminA;
         }
     }
 
-    /*
+    /**
      * Return (X - Mean)
      *
-     * @return array XminA
+     * @return array XminA values
      */
-    public function Get_XminAvg() {
+    public function getXminAvg(): ?array {
         return $this->XminA;
     }
 
-    /*
+    /**
      * Return (X - Mean) squared
      *
-     * @return array XminAsqr
+     * @return array XminAsqr values
      */
-    public function Get_XminAvgsqr() {
+    public function getXminAvgsqr(): ?array {
         return $this->XminAsqr;
     }
 
-    /*
-     * Calculate the Interquartle Range
+    /**
+     * Calculate the Interquartile Range
      *
-     * @return mixed Iqr
+     * @return float Interquartile range
      */
-    public function Find_IQR() {
-        if(!isset($this->q)) {
-            $this->q = self::Find_Q();
+    public function findIQR(): float {
+        if ($this->q === null) {
+            $this->q = $this->findQ();
         }
-        return $this->iqr = $this->q[3] - $this->q[1];
-    }
-
-    /*
-     * Return the Interquartile Range
-     *
-     * @return mixed Iqr
-     */
-    public function Get_IQR() {
+        $this->iqr = $this->q[3] - $this->q[1];
         return $this->iqr;
     }
 
-    /*
-     * Calculate the score at a certain percentile within an array
+    /**
+     * Return the Interquartile Range
      *
-     * @param array $x Set of numbers, $percentile
-     * @access private
-     * @return mixed Percentile
+     * @return float Interquartile range
      */
-    private function Percentile($x,$percentile){
-		if(0 < $percentile && $percentile < 1) {
-			$p = $percentile;
-		} elseif(1 < $percentile && $percentile <= 100) {
-			$p = $percentile * .01;
-		} else {
-			return "";
-		}
-		$count = count($x);
-		$allindex = ($count-1)*$p;
-		$intvalindex = intval($allindex);
-		$floatval = $allindex - $intvalindex;
-		sort($x);
-		if(!is_float($floatval)){
-			$result = $x[$intvalindex];
-		} else {
-			if($count > $intvalindex+1) {
-				$result = $floatval*($x[$intvalindex+1] - $x[$intvalindex]) + $x[$intvalindex];
-                        }
-			else {
-				$result = $x[$intvalindex];
-                        }
-		}
-		return $result;
+    public function getIQR(): ?float {
+        return $this->iqr;
     }
 
-    /*
+    /**
+     * Calculate the score at a certain percentile within an array
+     *
+     * @param array $x Set of numbers
+     * @param float|int $percentile Percentile to find
+     * @return float Percentile value
+     */
+    private function percentile(array $x, float|int $percentile): float {
+        if (0 < $percentile && $percentile < 1) {
+            $p = $percentile;
+        } elseif (1 < $percentile && $percentile <= 100) {
+            $p = $percentile * 0.01;
+        } else {
+            return 0.0;
+        }
+        
+        $count = count($x);
+        $allindex = ($count - 1) * $p;
+        $intvalindex = intval($allindex);
+        $floatval = $allindex - $intvalindex;
+        
+        sort($x);
+        
+        if (!is_float($floatval)) {
+            $result = (float)$x[$intvalindex];
+        } else {
+            if ($count > $intvalindex + 1) {
+                $result = $floatval * ((float)$x[$intvalindex + 1] - (float)$x[$intvalindex]) + (float)$x[$intvalindex];
+            } else {
+                $result = (float)$x[$intvalindex];
+            }
+        }
+        
+        return $result;
+    }
+
+    /**
      * Calculate the Population or Sample Variance
      *
      * @param string $ps 'p' for population or 's' for sample
-     * @return mixed
+     * @return float Variance
      */
-    public function Find_V($ps='p') {
-        if(!isset($this->XminA)) {
-            $this->XminA = self::Calculate_XminAvg(true);
+    public function findV(string $ps = 'p'): float {
+        if ($this->XminAsqr === null) {
+            $this->XminAsqr = $this->calculateXminAvg(true);
         }
-        ($ps == 'p') ? $n = $this->pn : $n = $this->sn;
-        $sumXminAsqr = array_sum($this->XminA);
-        return round(($sumXminAsqr) / $n,$this->round);
+        
+        $n = ($ps === 'p') ? $this->pn : $this->sn;
+        $sumXminAsqr = array_sum($this->XminAsqr);
+        
+        $result = round(($sumXminAsqr) / $n, $this->round);
+        
+        if ($ps === 'p') {
+            $this->pv = $result;
+        } else {
+            $this->sv = $result;
+        }
+        
+        return $result;
     }
 
-    /*
+    /**
      * Return the Population Variance
      *
-     * @return mixed Pv
+     * @return float Population variance
      */
-    public function Get_PV() {
+    public function getPV(): ?float {
         return $this->pv;
     }
 
-    /*
+    /**
      * Return the Sample Variance
      *
-     * @return mixed Sv
+     * @return float Sample variance
      */
-    public function Get_SV() {
+    public function getSV(): ?float {
         return $this->sv;
     }
 
-    /*
+    /**
      * Calculate the Sample Standard Deviation or Population Standard Deviation
      *
      * @param string $ps 'p' for population or 's' for sample
-     * @return mixed Sd
+     * @return float Standard deviation
      */
-     public function Find_SD($ps='p') {
-         switch($ps) {
-            case 'p':
-                if(!isset($this->pv)) {
-                    $this->pv = self::Find_V('p');
-                }
-                $v = $this->pv;
-            break;
-            case 's':
-                if(!isset($this->sv)) {
-                    $this->sv = self::Find_V('s');
-                }
-                $v = $this->sv;
-            break;
-         }
-         return round(sqrt($v),$this->round);
-     }
+    public function findSD(string $ps = 'p'): float {
+        $v = 0;
+        
+        if ($ps === 'p') {
+            if ($this->pv === null) {
+                $this->pv = $this->findV('p');
+            }
+            $v = $this->pv;
+            $this->psd = round(sqrt($v), $this->round);
+            return $this->psd;
+        } else {
+            if ($this->sv === null) {
+                $this->sv = $this->findV('s');
+            }
+            $v = $this->sv;
+            $this->ssd = round(sqrt($v), $this->round);
+            return $this->ssd;
+        }
+    }
 
-    /*
+    /**
      * Return Population Standard Deviation
      *
-     * @return mixed Psd
+     * @return float Population standard deviation
      */
-    public function Get_PSD() {
+    public function getPSD(): ?float {
         return $this->psd;
     }
 
-    /*
+    /**
      * Return Sample Standard Deviation
      *
-     * @return mixed Ssd
+     * @return float Sample standard deviation
      */
-    public function Get_SSD() {
+    public function getSSD(): ?float {
         return $this->ssd;
     }
 
-    /*
+    /**
      * Calculate Relative Frequency
      *
-     * @return array Rf
+     * @return array Relative frequency
      */
-    public function Calculate_RF() {
+    public function calculateRF(): array {
         $f = $this->frequency;
         $fsum = array_sum($f);
-        $rf = array();
-        foreach($f as $f) {
-            $rf[] = round(($f / $fsum),$this->round);
+        $rf = [];
+        
+        foreach ($f as $freq) {
+            $rf[] = round(($freq / $fsum), $this->round);
         }
-        return $this->rf = $rf;
-    }
-
-    /*
-     * Return Relative Frequency
-     *
-     * @return array Rf
-     */
-    public function Get_RF() {
+        
+        $this->rf = $rf;
         return $this->rf;
     }
 
-    /*
-     * Calculate Relative Frequency Percentages
+    /**
+     * Return Relative Frequency
      *
-     * @return array Rfp
+     * @return array Relative frequency
      */
-    public function Calculate_RFP() {
-        $rfp = array();
-        foreach($this->rf as $f) {
-            $rfp[] = round(($f * 100),$this->round);
-        }
-        return $this->rfp = $rfp;
+    public function getRF(): ?array {
+        return $this->rf;
     }
 
-    /*
-     * Return Relative Frequency Percentages
+    /**
+     * Calculate Relative Frequency Percentages
      *
-     * @return array Rfp
+     * @return array Relative frequency percentages
      */
-    public function Get_RFP() {
+    public function calculateRFP(): array {
+        if ($this->rf === null) {
+            $this->rf = $this->calculateRF();
+        }
+        
+        $rfp = [];
+        
+        foreach ($this->rf as $f) {
+            $rfp[] = round(($f * 100), $this->round);
+        }
+        
+        $this->rfp = $rfp;
         return $this->rfp;
     }
 
-    /*
+    /**
+     * Return Relative Frequency Percentages
+     *
+     * @return array Relative frequency percentages
+     */
+    public function getRFP(): ?array {
+        return $this->rfp;
+    }
+
+    /**
      * Calculate Cumulative Frequency
      *
-     * @return array Cf
+     * @return array Cumulative frequency
      */
-    public function Calculate_CF() {
-        $cf = array();
+    public function calculateCF(): array {
+        $cf = [];
         $total = 0;
-        foreach($this->frequency as $f) {
+        
+        foreach ($this->frequency as $f) {
             $total += $f;
             $cf[] = $total;
         }
-        return $this->cf = $cf;
-    }
-
-    /*
-     * Return Cumulative Frequency
-     *
-     * @return array Cf
-     */
-    public function Get_CF() {
+        
+        $this->cf = $cf;
         return $this->cf;
     }
 
+    /**
+     * Return Cumulative Frequency
+     *
+     * @return array Cumulative frequency
+     */
+    public function getCF(): ?array {
+        return $this->cf;
+    }
 }
-
-?>
