@@ -1,6 +1,6 @@
 # Simple PHP Statistics Class
 
-A lightweight, easy-to-use PHP class for calculating common statistical measures. Originally created in 2010, updated in 2025, and again in 2026.
+A lightweight, easy-to-use PHP class for calculating common statistical measures. Originally created in 2010, updated in 2025, and again in 2026 as well as adding a Fantasylang equivalent statistics script.
 
 ## Features
 
@@ -162,6 +162,18 @@ To run the unit tests, you will need [Composer](https://getcomposer.org/).
    ```bash
    vendor/bin/phpunit
    ```
+
+## Fantasylang Port
+
+A direct translation of the core Statistics math logic is provided for the [Fantasylang](https://fantasylang.com/) programming language in `Statistics.fla`. 
+
+To leverage the class in your 5YN-OS environment, you can `summon "Statistics.fla";` and create an instance with `forge stats = new Statistics([1,2,3]);`.
+
+### Running Fantasylang Tests
+Unit tests matching the mathematical expectations of the PHP suite have been implemented within a separate script. You can execute them utilizing the `fl` CLI:
+```bash
+fl run test_statistics.fla
+```
 
 ## License
 
