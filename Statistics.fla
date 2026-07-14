@@ -1,0 +1,113 @@
+tome Statistics {
+    scores,
+    pn,
+    sn,
+    _round,
+
+    public spell init(scores, round) {
+        self._round = round;
+        self.scores = self.cleanArray(scores);
+        self.pn = length_of(self.scores);
+        self.sn = self.pn - 1;
+    }
+
+    public spell cleanArray(data) {
+        forge cleaned = scroll[];
+        forge i = 0;
+        forge len = length_of(data);
+        whilst (i < len) {
+            forge val = data[i];
+            should (type_of(val) == "num") {
+                scroll_push(cleaned, val);
+            }
+            i = i + 1;
+        }
+        scroll_sort(cleaned);
+        yield cleaned;
+    }
+
+    public spell _formatNum(val) {
+        forge mult = power(10, self._round);
+        yield round(val * mult) / mult;
+    }
+
+    public spell findMean() {
+        should (self.pn == 0) {
+            banish fault_make("ValueError", "Cannot calculate mean of empty dataset");
+        }
+        forge sum = scroll_sum(self.scores);
+        yield self._formatNum(sum / self.pn);
+    }
+
+    public spell findMedian() {
+        should (self.pn == 0) {
+            banish fault_make("ValueError", "Cannot calculate median of empty dataset");
+        }
+        
+        ~~ Approximate integer division for index finding
+        forge mid = round((self.pn / 2) - 0.5); 
+        
+        should (self.pn % 2 == 0) {
+            forge m1 = self.scores[mid - 1];
+            forge m2 = self.scores[mid];
+            yield self._formatNum((m1 + m2) / 2);
+        }
+        yield self._formatNum(self.scores[mid]);
+    }
+    
+    public spell percentile(x, p) {
+        forge count = length_of(x);
+        should (count == 0) {
+            yield 0;
+        }
+        forge allindex = (count - 1) * p;
+        forge intvalindex = round(allindex - 0.4999); ~~ Safe floor approximation
+        forge floatval = allindex - intvalindex;
+        
+        forge result = floatval * (x[intvalindex + 1] - x[intvalindex]) + x[intvalindex];
+        yield result;
+    }
+    
+    public spell findQ() {
+        forge q = scroll[
+            self._formatNum(self.percentile(self.scores, 0.25)),
+            self._formatNum(self.percentile(self.scores, 0.5)),
+            self._formatNum(self.percentile(self.scores, 0.75))
+        ];
+        yield q;
+    }
+
+    public spell findIQR() {
+        forge q = self.findQ();
+        yield self._formatNum(q[2] - q[0]);
+    }
+    
+    public spell findRange() {
+        should (self.pn == 0) { yield 0; }
+        forge max_v = self.scores[self.pn - 1];
+        forge min_v = self.scores[0];
+        yield self._formatNum(max_v - min_v);
+    }
+    
+    public spell findV() {
+        should (self.sn <= 0) {
+            banish fault_make("DivisionByZeroError", "Insufficient data points for sample variance");
+        }
+        forge mean = self.findMean();
+        forge sum_sq = 0;
+        forge i = 0;
+        forge len = length_of(self.scores);
+        whilst (i < len) {
+            forge val = self.scores[i];
+            forge diff = val - mean;
+            sum_sq = sum_sq + power(diff, 2);
+            i = i + 1;
+        }
+        yield self._formatNum(sum_sq / self.sn);
+    }
+    
+    public spell findSD() {
+        forge variance = self.findV();
+        yield self._formatNum(sqrt(variance));
+    }
+}

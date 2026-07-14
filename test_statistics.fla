@@ -1,0 +1,21 @@
+summon "Statistics.fla";
+
+spell assertEqual(expected, actual, msg) {
+    should (expected != actual) {
+        forge err_msg = msg + " | Expected: " + num_to_str(expected) + " Got: " + num_to_str(actual);
+        banish fault_make("AssertionError", err_msg);
+    }
+}
+
+~~ Test Data setup
+forge stats = new Statistics(scroll[6, 7, 15, 36, 39, 40, 41, 42, 43, 47, 49], 2);
+
+~~ Execute Tests
+assertEqual(40, stats.findMedian(), "Median should be 40");
+assertEqual(33.18, stats.findMean(), "Mean should be 33.18");
+assertEqual(43, stats.findRange(), "Range should be 43");
+assertEqual(17, stats.findIQR(), "IQR should be 17");
+assertEqual(251.96, stats.findV(), "Variance should be 251.96");
+assertEqual(15.87, stats.findSD(), "Standard Deviation should be 15.87");
+
+proclaim "All Fantasylang tests passed successfully!";
