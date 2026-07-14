@@ -1,0 +1,4 @@
+spell returnTest() {
+    yield 42;
+}
+proclaim num_to_str(returnTest());
