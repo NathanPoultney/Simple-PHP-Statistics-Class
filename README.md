@@ -1,6 +1,6 @@
 # Simple PHP Statistics Class
 
-A lightweight, easy-to-use PHP class for calculating common statistical measures. Originally created in 2010 and updated in 2025.
+A lightweight, easy-to-use PHP class for calculating common statistical measures. Originally created in 2010, updated in 2025, and again in 2026.
 
 ## Features
 
@@ -15,15 +15,15 @@ This statistics class provides numerous statistical calculations for numerical d
 
 ## Requirements
 
-- PHP 8.0 or higher
+- PHP 8.3 or higher
 - Strict typing enabled
 
 ## Installation
 
-Simply include the `statistics.class.php` file in your project:
+Simply include the `Statistics.php` file in your project:
 
 ```php
-require_once 'statistics.class.php';
+require_once 'Statistics.php';
 ```
 
 ## Basic Usage
@@ -114,7 +114,7 @@ $sampleSize = $stats->getSN();
 
 ```php
 <?php
-require_once 'statistics.class.php';
+require_once 'Statistics.php';
 
 // Initialise with data
 $scores = [7, 3.4, 4, 6.9, 4, 2.2, 7.8];
@@ -149,6 +149,19 @@ echo "Population Standard Deviation: $psd\n";
 echo "Sample Standard Deviation: $ssd\n";
 ?>
 ```
+
+## Testing
+
+To run the unit tests, you will need [Composer](https://getcomposer.org/).
+
+1. Install dependencies:
+   ```bash
+   composer install
+   ```
+2. Run the tests:
+   ```bash
+   vendor/bin/phpunit
+   ```
 
 ## License
 

@@ -3,32 +3,30 @@
 declare(strict_types=1);
 
 class Statistics {
-    private int $round = 2;
-    public array $scores;
-    public array $frequency;
-    public int $pn;
-    public int $sn;
-    public ?array $fx = null;
-    public ?array $XminA = null;
-    public ?array $XminAsqr = null;
-    public ?array $rf = null;
-    public ?array $rfp = null;
-    public ?array $cf = null;
-    public ?float $mean = null;
-    public ?float $median = null;
-    public ?float $mode = null;
-    public ?float $range = null;
-    public ?float $iqr = null;
-    public ?float $pv = null;
-    public ?float $sv = null;
-    public ?float $psd = null;
-    public ?float $ssd = null;
-    public ?array $q = null;
-    public ?float $max = null;
-    public ?float $min = null;
+    private array $scores;
+    private array $frequency;
+    private int $pn;
+    private int $sn;
+    private ?array $fx = null;
+    private ?array $XminA = null;
+    private ?array $XminAsqr = null;
+    private ?array $rf = null;
+    private ?array $rfp = null;
+    private ?array $cf = null;
+    private ?float $mean = null;
+    private ?float $median = null;
+    private ?float $mode = null;
+    private ?float $range = null;
+    private ?float $iqr = null;
+    private ?float $pv = null;
+    private ?float $sv = null;
+    private ?float $psd = null;
+    private ?float $ssd = null;
+    private ?array $q = null;
+    private ?float $max = null;
+    private ?float $min = null;
 
-    public function __construct(array $scores = [1], int $round = 2) {
-        $this->round = $round;
+    public function __construct(array $scores = [], private int $round = 2) {
         $this->scores = $this->cleanArray($scores);
         $this->frequency = $this->calculateFrequency();
         $this->pn = count($this->scores);
@@ -44,11 +42,14 @@ class Statistics {
     private function cleanArray(array $x): array {
         $cleanScores = [];
         foreach ($x as $val) {
-            if ($val != 0) {
-                $cleanScores[] = (string)$val;
+            if (is_numeric($val)) {
+                $cleanScores[] = (string)(float)$val;
             }
         }
-        sort($cleanScores);
+        if (empty($cleanScores)) {
+            throw new InvalidArgumentException("Dataset must contain at least one numeric value.");
+        }
+        sort($cleanScores, SORT_NUMERIC);
         return $cleanScores;
     }
 
@@ -291,7 +292,7 @@ class Statistics {
         
         foreach ($this->scores as $key => $val) {
             $value = ($sqr) 
-                ? round(pow(((float)$val - $mean), 2), $this->round) 
+                ? round(((float)$val - $mean) ** 2, $this->round) 
                 : round(((float)$val - $mean), $this->round);
             
             $XminA[$key] = $value;
@@ -389,11 +390,15 @@ class Statistics {
      * @return float Variance
      */
     public function findV(string $ps = 'p'): float {
+        $n = ($ps === 'p') ? $this->pn : $this->sn;
+        if ($n <= 0) {
+            throw new DivisionByZeroError("Cannot calculate variance: insufficient data points.");
+        }
+
         if ($this->XminAsqr === null) {
             $this->XminAsqr = $this->calculateXminAvg(true);
         }
         
-        $n = ($ps === 'p') ? $this->pn : $this->sn;
         $sumXminAsqr = array_sum($this->XminAsqr);
         
         $result = round(($sumXminAsqr) / $n, $this->round);

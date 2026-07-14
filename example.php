@@ -3,10 +3,10 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/statistics.class.php';
+require_once __DIR__ . '/Statistics.php';
 
 // Example of using the Statistics class
-$scores = [7, 3.4, 4, 6.9, 4, 2.2, 7.8];
+$scores = [7, 3.4, 4, 6.9, 4, 2.2, 7.8, 0];
 $stats = new Statistics($scores);
 
 // Calculate all statistics
